@@ -1,0 +1,16 @@
+README.md
+app.py
+collect.py
+pyproject.toml
+sampledata.py
+scenario.py
+source.py
+storage.py
+transport.py
+epub_reader.egg-info/PKG-INFO
+epub_reader.egg-info/SOURCES.txt
+epub_reader.egg-info/dependency_links.txt
+epub_reader.egg-info/top_level.txt
+tests/test_collect.py
+tests/test_scenario.py
+tests/test_source.py

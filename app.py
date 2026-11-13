@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import tempfile
 
+from collect import collect_publication
 from source import inspect_bytes
 from sampledata import samples
 from storage import Archive
@@ -35,10 +36,19 @@ def demo():
             return dict(input=name, bytes=len(raw), captures=len(archive.list()),
                         same_capture=first==repeated, rows=rows, requests=len(server.requests))
 
+def collect_demo():
+    raw = samples()['manual.epub']
+    routes = {'GET /manual':[{'base64':base64.b64encode(raw).decode()}]}
+    with ReplaySource(routes) as server:
+        status, headers, payload = fetch(server.url + '/manual')
+        if status != 200:
+            raise ValueError('来源请求失败')
+        return dict(requests=len(server.requests), report=collect_publication(payload))
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description='来源检查与原件留存')
     commands = parser.add_subparsers(dest='command', required=True)
-    for name in ('inspect', 'capture'):
+    for name in ('inspect', 'capture', 'collect'):
         command = commands.add_parser(name)
         command.add_argument('path')
         if name == 'capture':
@@ -49,10 +59,13 @@ def main(argv=None):
     fixtures = commands.add_parser('fixtures')
     fixtures.add_argument('directory')
     commands.add_parser('demo')
+    commands.add_parser('collect-demo')
     args = parser.parse_args(argv)
     try:
         if args.command == 'demo':
             result = demo()
+        elif args.command == 'collect-demo':
+            result = collect_demo()
         elif args.command == 'fixtures':
             destination = Path(args.directory)
             destination.mkdir(parents=True, exist_ok=True)
@@ -67,6 +80,10 @@ def main(argv=None):
                 result = archive.list()
         else:
             raw = read_input(args.path)
+            if args.command == 'collect':
+                result = collect_publication(raw)
+                print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+                return 0
             rows = inspect_bytes(raw)
             if args.command == 'inspect':
                 result = rows
